@@ -1,0 +1,85 @@
+{
+  "variables": {
+    "version": "1"
+  },
+  "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "scripts/ansible.sh"
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "../shared/main.yml",
+      "galaxy_file": "../shared/requirements.yml"
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "scripts/cleanup.sh"
+    }
+  ],
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "boot_command": [
+        "<tab> text inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "disk_size": 81920,
+      "format": "ova",      
+      "guest_os_type": "RedHat_64",
+      "headless": false,
+      "http_directory": "http",
+      "iso_urls": [
+        "Rocky-8.7-x86_64-dvd1.iso"
+      ],
+      "iso_checksum": "sha256:4827dce1c58560d3ca470a5053e8d86ba059cbb77cfca3b5f6a5863d2aac5b84",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "1800s",
+      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "virtualbox_version_file": ".vbox_version",
+      "vm_name": "packer-rockylinux-8-x86_64",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "2048"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "keep_input_artifact": true,
+      "output": "builds/{{.Provider}}-rockylinux8.box",
+      "type": "vagrant"
+    },
+    {
+      "access_key": "AKIAULJLFD37BBWQCXGC",
+      "ami_name": "rocky8-iso-base{{timestamp}}",
+      "license_type": "BYOL",
+      "region": "us-east-1",
+      "s3_bucket_name": "centos-images",
+      "secret_key": "btdX+sV9lf3FEZuIopy3EpFw9Y4pcSD3ehMUC6GV",
+      "skip_clean": true,
+      "tags": {
+        "Description": "packer-rocky-8-x86_64 amazon-import {{timestamp}}",
+        "Name": "rocky8-iso-base",
+        "version": "1"
+      },
+      "type": "amazon-import"
+    }
+    
+  ]
+}
